@@ -1,0 +1,32 @@
+model{
+for (i in 1:I){	#individuals
+	temp[i]<-(log(timeF[i]+0.01)-log(lam[i]))/sigma
+	log(lam[i])<-beta[1]+beta[2]*x1[i]+beta[3]*x2[i]+beta[4]*x3[i]+beta[5]*x4[i]+
+		u[spt[i]]+gam[yr[i]]+gam2[evnt[i]]
+#logistic distn surv and density
+	s[i]<-1/(1+exp(temp[i]))
+	f[i]<-exp(temp[i])*pow(s[i],2)
+#log like
+	L[i]<-indic[i]*log(f[i]/(sigma*(timeF[i]+0.01)))+(1-indic[i])*log(s[i])
+#Poisson zeros trick
+	zeros[i]<-0
+	new[i]<- -L[i]
+	zeros[i]~dpois(new[i])
+}#close i loop
+for (j in 1:5){beta[j]~dnorm(0,0.001)}
+tauu<-pow(sdu,-2)
+sdu~dunif(0,10)
+sigma~dunif(0.01,10)
+for (j in 1:25){u[j]~dnorm(0,tauu)}#close j loop
+gam[1]<-0
+taugam<-pow(sdgam,-2)
+sdgam~dunif(0,10)
+gam2[1]<-0
+gam2[2]~dnorm(0,taugam2)
+taugam2<-pow(sdgam2,-2)
+sdgam2~dunif(0,10)
+for (j in 2:6){gam[j]~dnorm(gam[j-1],taugam)}#close j loop
+#event indic
+val~dunif(20,60)
+for (i in 1:I){evnt[i]<-step(tick[i]-val)+1}
+}#close model loop

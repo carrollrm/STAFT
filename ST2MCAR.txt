@@ -1,0 +1,32 @@
+model{
+for (i in 1:I){	#individuals
+	temp[i]<-(log(timeF[i]+0.01)-lam[i])/sigma
+	lam[i]<-beta[1]+alpha[yr[i]]+beta[2]*x1[i]+beta[3]*x2[i]+beta[4]*x3[i]+beta[5]*x4[i]+
+		phi[yr[i],spt[i]]	
+#logistic distn surv and density
+	s[i]<-1/(1+exp(temp[i]))
+	f[i]<-exp(temp[i])*pow(s[i],2)
+#log like
+	L[i]<-indic[i]*log(f[i]/(sigma*(timeF[i]+0.01)))+(1-indic[i])*log(s[i])
+#Poisson zeros trick
+	zeros[i]<-0
+	new[i]<- -L[i]
+	zeros[i]~dpois(new[i])
+}#close i loop
+for (j in 1:5){
+	beta[j]~dnorm(0,0.001)
+}
+for (j in 1:6){
+	alpha[j]~dflat()
+}
+for (j in 1:25){
+	phi.mean[j]<-sum(phi[,j])/25
+}
+sigma~dunif(0.01,10)
+#spatial random effects
+phi[1:6,1:25]~mv.car(adj[],weights[],num[],tauu[1:6,1:6])
+tauu[1:6,1:6]~dwish(R[1:6,1:6],6)
+for (k in 1:sumNumNeigh){
+	weights[k]<-1
+}#close k loop
+}#close model loop

@@ -1,0 +1,40 @@
+model{
+for (i in 1:I){	#individuals
+	temp[i]<-(log(timeF[i]+0.01)-log(lam[i]))/sigma
+	log(lam[i])<-beta[1]+beta[2]*x1[i]+beta[3]*x2[i]+beta[4]*x3[i]+beta[5]*x4[i]+
+		u[spt[i]]+gam1[yr[i]]+gam2[evnt[i]]
+#logistic distn surv and density
+	s[i]<-1/(1+exp(temp[i]))
+	f[i]<-exp(temp[i])*pow(s[i],2)
+#log like
+	L[i]<-indic[i]*log(f[i]/(sigma*(timeF[i]+0.01)))+(1-indic[i])*log(s[i])
+#WAIC calcs
+	ppoc[i]<-exp(indic[i]*log(f[i]/(sigma*(timeF[i]+0.01)))+(1-indic[i])*log(s[i]))
+	icpoc[i]<-1/ppoc[i]
+	logppoc[i]<-log(ppoc[i])
+#Poisson zeros trick
+	zeros[i]<-0
+	new[i]<- -L[i]
+	zeros[i]~dpois(new[i])
+}#close i loop
+for (j in 1:5){
+	beta[j]~dnorm(0,0.001)
+}
+tauu<-pow(sdu,-2)
+sdu~dunif(0,10)
+sigma~dunif(0.01,10)
+#spatial random effects
+for (j in 1:25){	#spatial regions
+	u[j]~dnorm(0,tauu)
+}#close j loop
+gam2[1]<-0
+gam2[2]~dnorm(0,taugam2)
+taugam2<-pow(sdgam2,-2)
+sdgam2~dunif(0,10)
+gam1[1]<-0
+taugam1<-pow(sdgam1,-2)
+sdgam1~dunif(0,10)
+for (j in 2:6){
+	gam1[j]~dnorm(gam1[j-1],taugam1)
+}#close j loop
+}#close model loop

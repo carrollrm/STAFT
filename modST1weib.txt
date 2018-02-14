@@ -1,0 +1,31 @@
+model{
+for (i in 1:I){	#individuals
+	temp[i]<-(log(timeF[i]+0.01)-log(lam[i]))/sigma
+	log(lam[i])<-beta[1]+beta[2]*x1[i]+beta[3]*x2[i]+beta[4]*x3[i]+beta[5]*x4[i]+
+		u[ST[i]]	#ST is a variable indicating which spatial region and yr individual i is in
+#extreme value distn surv and density
+	s[i]<-exp(-exp(temp[i]))
+	f[i]<-s[i]*exp(temp[i])
+#log like
+	L[i]<-indic[i]*log(f[i]/(sigma*(timeF[i]+0.01)))+(1-indic[i])*log(s[i])
+#Poisson zeros trick
+	zeros[i]<-0
+	new[i]<- -L[i]
+	zeros[i]~dpois(new[i])
+}#close i loop
+for (j in 1:5){
+	beta[j]~dnorm(0,0.001)
+}
+sigma~dunif(0.01,10)
+#spatial random effects
+for (j in 1:25){	#spatial regions
+for (k in 2:6){	#years
+	u[(k-1)*25+j]~dnorm(u[(k-2)*25+j],tauu[k])
+}#close k loop
+	u[j]~dnorm(0,tauu[1])
+}#close j loop
+for (k in 1:6){
+	tauu[k]<-pow(sdu[k],-2)
+	sdu[k]~dunif(0,10)
+}#close k loop
+}#close model loop
